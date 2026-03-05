@@ -57,6 +57,7 @@ export default function KassePage() {
 
   // Warenkorb
   const [korb, setKorb] = useState<Pos[]>([]);
+  const [isStorno, setIsStorno] = useState(false);
   const summe = useMemo(
     () => korb.reduce((s, p) => s + p.einzelpreis * p.menge, 0),
     [korb]
@@ -179,7 +180,7 @@ export default function KassePage() {
         id: p.artikelId,
         bezeichnung: p.bezeichnung,
         qty: p.menge,
-        preis: p.einzelpreis,
+        preis: (isStorno ? -Math.abs(p.einzelpreis) : p.einzelpreis),
       })),
     };
 
@@ -192,7 +193,7 @@ export default function KassePage() {
       const data = await res.json().catch(() => ({}));
       if (res.ok && (data as any)?.ok) {
         alert(`Buchung gespeichert (${(data as any).count} Positionen).`);
-        setKorb([]); setAuswahl(null); setQueryMitglied(""); setQueryArtikel(""); } else {
+        setKorb([]); setAuswahl(null); setQueryMitglied(""); setQueryArtikel(""); setIsStorno(false); } else {
         alert('Fehler: ' + ((data as any)?.error ?? res.statusText));
       }
     } catch (e: any) {
@@ -234,13 +235,22 @@ export default function KassePage() {
   }, [kachelArtikel, auswahl]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className={"p-6 space-y-6 min-h-screen " + (isStorno ? "bg-red-100" : "")}>
       {/* Kopf */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold">Kasse</h1>
-        <a href="/dashboard" className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">
-          Zurück
-        </a>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsStorno((v) => !v)}
+            className={"px-4 py-2 rounded-lg text-sm font-semibold transition " + (isStorno ? "bg-red-600 text-white hover:bg-red-700" : "bg-red-200 text-red-900 hover:bg-red-300")}
+          >
+            Storno
+          </button>
+          <a href="/dashboard" className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">
+            Zurück
+          </a>
+        </div>
       </div>
 
       {/* Mitglied wählen */}
@@ -408,7 +418,7 @@ export default function KassePage() {
                 >
                   <div className="min-w-0">
                     <div className="font-medium text-sm truncate">{p.bezeichnung}</div>
-                    <div className="text-xs text-gray-600">{fmt(p.einzelpreis)}</div>
+                    <div className="text-xs text-gray-600">{fmt(isStorno ? -Math.abs(p.einzelpreis) : p.einzelpreis)}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -438,7 +448,7 @@ export default function KassePage() {
           )}
           <div className="mt-3 flex items-center justify-between font-semibold border-t pt-3">
             <span>Summe</span>
-            <span>{fmt(summe)}</span>
+            <span>{fmt(isStorno ? -Math.abs(summe) : summe)}</span>
           </div>
 
           <button

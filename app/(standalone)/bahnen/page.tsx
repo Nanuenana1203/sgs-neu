@@ -1,23 +1,46 @@
 "use client";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+
+type Gate = "loading" | "ok" | "no-session" | "forbidden";
 type Bahn = { id:number; nummer:string|null; name:string|null };
 
 export default function BahnenPage() {
+  const [gate, setGate] = useState<Gate>("loading");
   const [rows, setRows] = useState<Bahn[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const s = await fetch("/api/session", { cache:"no-store", credentials:"include" });
+        const sd = await s.json().catch(()=>({}));
+        const user = sd?.user ?? null;
+        if (!user) return setGate("no-session");
+        if (!user.isAdmin) return setGate("forbidden");
+        setGate("ok");
+      } catch {
+        setGate("no-session");
+      }
+    })();
+  }, []);
+
   async function load() {
     setLoading(true);
     try {
-      const r = await fetch("/api/bahnen", { cache: "no-store" });
+      const r = await fetch("/api/bahnen", { cache:"no-store" });
       const data = await r.json().catch(()=>[]);
       setRows(Array.isArray(data) ? data : []);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(()=>{ load(); },[]);
+
+  useEffect(() => {
+    if (gate === "ok") load();
+  }, [gate]);
 
   const filtered = useMemo(()=>{
     const s = q.trim().toLowerCase();
@@ -28,32 +51,45 @@ export default function BahnenPage() {
     );
   },[q, rows]);
 
-  async function delBahn(id:number) {
-    if (!confirm("Bahn wirklich löschen?")) return;
-    setLoading(true);
-    try {
-      const r = await fetch(`/api/bahnen/${id}`, { method:"DELETE" });
-      if (!r.ok) throw new Error("delete");
-      await load();
-    } catch {
-      alert("Löschen fehlgeschlagen.");
-    } finally { setLoading(false); }
+  if (gate !== "ok") {
+    const title =
+      gate === "loading" ? "Prüfe Berechtigung…" :
+      gate === "no-session" ? "Nicht angemeldet" :
+      "Kein Zugriff";
+    const msg =
+      gate === "loading" ? "" :
+      gate === "no-session"
+        ? "Bitte zuerst einloggen, um Bahnen zu verwalten."
+        : "Diese Funktion ist nur für Administratoren.";
+    const btnHref = gate === "no-session" ? "/" : "/dashboard";
+    const btnText = gate === "no-session" ? "Zur Anmeldung" : "Zum Dashboard";
+
+    return (
+      <div className="p-6">
+        <div className="rounded-2xl bg-white shadow border border-gray-100 p-6 max-w-xl mx-auto text-center space-y-4">
+          <h1 className="text-2xl font-semibold">{title}</h1>
+          {msg && <p>{msg}</p>}
+          {gate !== "loading" && (
+            <Link href={btnHref} className="inline-block px-4 py-2 rounded bg-slate-800 text-white">
+              {btnText}
+            </Link>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <main style={{ padding: "24px" }}>
-      <div style={{ maxWidth:1100, margin:"0 auto" }}>
-        <h1 style={{ textAlign:"center", fontSize:"28px", fontWeight:800, marginBottom:16 }}>Bahnen</h1>
+    <main className="p-6">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-center text-3xl font-extrabold mb-4">Bahnen</h1>
 
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-          <div style={{ display:"flex", gap:12 }}>
-            <Link href="/bahnen/neu"
-              style={{ background:"#3b82f6", color:"#fff", padding:"8px 14px", borderRadius:6, fontWeight:600, textDecoration:"none" }}>
+        <div className="flex justify-between items-center mb-4 gap-4">
+          <div className="flex gap-3">
+            <Link href="/bahnen/neu" className="px-4 py-2 rounded bg-blue-600 text-white font-semibold">
               + Neue Bahn
             </Link>
-            {/* Zurück führt jetzt zum Dashboard */}
-            <Link href="/dashboard"
-              style={{ background:"#e5e7eb", padding:"8px 14px", borderRadius:6, fontWeight:600, textDecoration:"none" }}>
+            <Link href="/dashboard" className="px-4 py-2 rounded bg-gray-200 font-semibold">
               Zurück
             </Link>
           </div>
@@ -62,38 +98,34 @@ export default function BahnenPage() {
             value={q}
             onChange={(e)=>setQ(e.target.value)}
             placeholder="Nach Bahn suchen…"
-            style={{ width: 320, padding:"10px 12px", border:"1px solid #e5e7eb", borderRadius:8 }}
+            className="w-80 px-3 py-2 border rounded"
           />
         </div>
 
-        <div style={{ border:"1px solid #e5e7eb", borderRadius:10, overflow:"hidden", background:"#fff" }}>
-          <table style={{ width:"100%", borderCollapse:"collapse" }}>
-            <thead style={{ background:"#f9fafb" }}>
+        <div className="border rounded bg-white overflow-hidden">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-50">
               <tr>
-                <th style={{ padding:12, textAlign:"left" }}>Nummer</th>
-                <th style={{ padding:12, textAlign:"left" }}>Bahn</th>
-                <th style={{ padding:12, textAlign:"left" }}>Aktionen</th>
+                <th className="p-3 text-left">Nummer</th>
+                <th className="p-3 text-left">Bahn</th>
+                <th className="p-3 text-left">Aktionen</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(b=>(
-                <tr key={b.id} style={{ borderTop:"1px solid #e5e7eb" }}>
-                  <td style={{ padding:12 }}>{b.nummer ?? "—"}</td>
-                  <td style={{ padding:12 }}>{b.name ?? "—"}</td>
-                  <td style={{ padding:12 }}>
-                    <div style={{ display:"flex", gap:20, alignItems:"center" }}>
-                      <Link href={`/bahnen/${b.id}`} title="Bearbeiten" style={{ fontSize:"18px", textDecoration:"none" }}>✏️</Link>
-                      <button title="Löschen" onClick={()=>delBahn(b.id)}
-                        style={{ background:"transparent", border:"none", cursor:"pointer", fontSize:"18px" }}>🗑️</button>
-                    </div>
+                <tr key={b.id} className="border-t">
+                  <td className="p-3">{b.nummer ?? "—"}</td>
+                  <td className="p-3">{b.name ?? "—"}</td>
+                  <td className="p-3">
+                    <Link href={`/bahnen/${b.id}`} className="text-lg">✏️</Link>
                   </td>
                 </tr>
               ))}
               {!loading && !filtered.length && (
-                <tr><td colSpan={3} style={{ padding:16, color:"#6b7280" }}>Keine Einträge gefunden.</td></tr>
+                <tr><td colSpan={3} className="p-4 text-gray-500">Keine Einträge gefunden.</td></tr>
               )}
               {loading && (
-                <tr><td colSpan={3} style={{ padding:16, color:"#6b7280" }}>Lade…</td></tr>
+                <tr><td colSpan={3} className="p-4 text-gray-500">Lade…</td></tr>
               )}
             </tbody>
           </table>

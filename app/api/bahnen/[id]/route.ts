@@ -17,9 +17,10 @@ function badId() {
 }
 
 // Einzelne Bahn abrufen
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!BASE || !KEY) return NextResponse.json({ ok:false, where:"env" }, { status:500 });
-  const id = Number(params.id);
+  const { id: idParam } = await ctx.params;
+  const id = Number(idParam);
   if (!Number.isFinite(id)) return badId();
 
   const url = `${BASE}/rest/v1/bahnen?id=eq.${id}&select=id,nummer,name&limit=1`;
@@ -31,9 +32,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 }
 
 // Bahn löschen
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!BASE || !KEY) return NextResponse.json({ ok:false, where:"env" }, { status:500 });
-  const id = Number(params.id);
+  const { id: idParam } = await ctx.params;
+  const id = Number(idParam);
   if (!Number.isFinite(id)) return badId();
 
   const r = await fetch(`${BASE}/rest/v1/bahnen?id=eq.${id}`, {
@@ -45,9 +47,10 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
 }
 
 // Bahn aktualisieren
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (!BASE || !KEY) return NextResponse.json({ ok:false, where:"env" }, { status:500 });
-  const id = Number(params.id);
+  const { id: idParam } = await ctx.params;
+  const id = Number(idParam);
   if (!Number.isFinite(id)) return badId();
 
   const body = await req.json().catch(()=>({}));

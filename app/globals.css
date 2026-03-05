@@ -1,2 +1,6 @@
 @import "tailwindcss";
 /* Platz für kleine globale Styles */
+
+
+/* copyrightbadge safe-area */
+body{padding-bottom:160px;}

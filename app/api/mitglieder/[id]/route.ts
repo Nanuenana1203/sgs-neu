@@ -17,10 +17,9 @@ function badEnv() {
 }
 
 /** GET one member (used by Edit page) */
-export async function GET(_req: Request, ctx: { params: { id:string } }) {
+export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (badEnv()) return NextResponse.json({ ok:false, where:"env" }, { status:500 });
-  const id = Number(ctx.params?.id ?? 0);
-  if (!Number.isFinite(id) || id <= 0) return NextResponse.json({ ok:false, error:"INVALID_ID" }, { status:400 });
+  const id =  (await ctx.params).id ;
 
   const url = `${BASE}/rest/v1/mitglieder`
     + `?select=id,mitgliedsnr,name,strasse,landkz,plz,ort,preisgruppe,ausweisnr,mitglied,gesperrt`
@@ -36,10 +35,9 @@ export async function GET(_req: Request, ctx: { params: { id:string } }) {
 }
 
 /** UPDATE one member */
-export async function PUT(req: Request, ctx: { params: { id:string } }) {
+export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (badEnv()) return NextResponse.json({ ok:false, where:"env" }, { status:500 });
-  const id = Number(ctx.params?.id ?? 0);
-  if (!Number.isFinite(id) || id <= 0) return NextResponse.json({ ok:false, error:"INVALID_ID" }, { status:400 });
+  const id =  (await ctx.params).id ;
 
   let body:any={}; try{ body = await req.json(); }catch{}
   const row:any = {};
@@ -64,10 +62,9 @@ export async function PUT(req: Request, ctx: { params: { id:string } }) {
 }
 
 /** DELETE one member (used by trash icon) */
-export async function DELETE(_req: Request, ctx: { params: { id:string } }) {
+export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   if (badEnv()) return NextResponse.json({ ok:false, where:"env" }, { status:500 });
-  const id = Number(ctx.params?.id ?? 0);
-  if (!Number.isFinite(id) || id <= 0) return NextResponse.json({ ok:false, error:"INVALID_ID" }, { status:400 });
+  const id =  (await ctx.params).id ;
 
   const url = `${BASE}/rest/v1/mitglieder?id=eq.${encodeURIComponent(String(id))}`;
   const r = await fetch(url, { method:"DELETE", headers, cache:"no-store" });
@@ -76,3 +73,5 @@ export async function DELETE(_req: Request, ctx: { params: { id:string } }) {
 
   return NextResponse.json({ ok:true });
 }
+
+export async function PATCH(req, ctx) { return PUT(req, ctx); }

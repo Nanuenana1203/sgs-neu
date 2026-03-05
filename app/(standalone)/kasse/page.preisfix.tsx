@@ -1,3 +1,4 @@
+import Link from "next/link";
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -146,7 +147,7 @@ export default function KassePage() {
       {/* Kopf */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold">Kasse</h1>
-        <a href="/dashboard" className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">Zurück</a>
+        <Link href="/dashboard" className="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm">Zurück</Link>
       </div>
 
       {/* Mitglied wählen (oben, volle Breite; bleibt wie zuletzt) */}

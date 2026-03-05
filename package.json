@@ -14,9 +14,9 @@
     "bcryptjs": "^3.0.2",
     "iron-session": "^8.0.4",
     "lucide-react": "^0.552.0",
-    "next": "16.0.1",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "next": "16.1.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "sonner": "^2.0.7"
   },
   "devDependencies": {

@@ -1,0 +1,99 @@
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+const BASE =
+  process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ??
+  "";
+
+const headers: Record<string, string> = {
+  apikey: KEY,
+  Authorization: `Bearer ${KEY}`,
+  "Content-Type": "application/json",
+};
+
+function shaDevice(token: string) {
+  const secret = process.env.DEVICE_BINDING_SECRET || process.env.IRON_SESSION_PASSWORD || "";
+  return crypto.createHash("sha256").update(token + "|" + secret).digest("hex");
+}
+
+export async function POST(req: Request) {
+  try {
+    if (!BASE || !KEY) {
+      return NextResponse.json(
+        { ok: false, where: "env", error: "CONFIG", hasBASE: !!BASE, hasKEY: !!KEY },
+        { status: 500 },
+      );
+    }
+
+    let body: any = {};
+    try { body = await req.json(); } catch { body = {}; }
+
+    const name = String(body?.name ?? "").trim();
+    const plain = String(body?.kennwort ?? "").trim();
+    const deviceToken = String(body?.deviceToken ?? "").trim();
+
+    if (!name || !plain) {
+      return NextResponse.json({ ok: false, error: "MISSING_CREDENTIALS" }, { status: 400 });
+    }
+
+    const url =
+      `${BASE}/rest/v1/benutzer` +
+      `?select=id,name,email,kennwort,istadmin,erlaubter_rechner_hash` +
+      `&name=eq.${encodeURIComponent(name)}` +
+      `&limit=1`;
+
+    const supaRes = await fetch(url, { headers, cache: "no-store" });
+    const rows = await supaRes.json();
+    const user = Array.isArray(rows) ? rows[0] : null;
+
+    if (!user?.kennwort) {
+      return NextResponse.json({ ok: false, error: "INVALID_CREDENTIALS" }, { status: 401 });
+    }
+
+    const ok = await bcrypt.compare(plain, String(user.kennwort));
+    if (!ok) {
+      return NextResponse.json({ ok: false, error: "INVALID_CREDENTIALS" }, { status: 401 });
+    }
+
+    const isAdmin = !!user.istadmin;
+
+    // Rechnerbindung: nur für NICHT-Admins
+    if (!isAdmin) {
+      if (!deviceToken) {
+        return NextResponse.json({ ok: false, error: "RECHNER_NICHT_ERLAUBT" }, { status: 403 });
+      }
+
+      const deviceHash = shaDevice(deviceToken);
+      const allowed = user.erlaubter_rechner_hash;
+
+      if (!allowed) {
+        return NextResponse.json({ ok: false, error: "RECHNER_NICHT_ERLAUBT" }, { status: 403 });
+      }
+
+      if (String(allowed) !== String(deviceHash)) {
+        return NextResponse.json({ ok: false, error: "RECHNER_NICHT_ERLAUBT" }, { status: 403 });
+      }
+    }
+
+    // Cookie für UI / Guards
+    const res = NextResponse.json({ ok: true, user: { id: user.id, name: user.name, isAdmin } });
+    res.cookies.set("sgs_user", JSON.stringify({ id: user.id, name: user.name, isAdmin }), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: true,
+      path: "/",
+      maxAge: 60 * 60 * 8,
+    });
+
+    return res;
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, where: "exception", detail: String(e?.message ?? e) }, { status: 500 });
+  }
+}

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from "react";
 import Link from "next/link";
+import { getDeviceToken } from "../../lib/deviceToken";
 
 export default function Home() {
   const [name, setName] = useState("");
@@ -14,7 +15,7 @@ export default function Home() {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, kennwort }),
+        body: JSON.stringify({ name, kennwort, deviceToken: getDeviceToken() }),
       });
 
       const data = await res.json().catch(() => null);
@@ -22,7 +23,7 @@ export default function Home() {
         document.cookie = `sgs_session=1; Path=/; Max-Age=${60 * 60 * 8}; SameSite=Lax`;
         window.location.href = "/dashboard";
       } else {
-        setMsg("Name oder Kennwort ungültig");
+        setMsg("Name oder Kennwort ungültig oder Rechner nicht freigegeben");
       }
     } catch {
       setMsg("Netzwerkfehler");

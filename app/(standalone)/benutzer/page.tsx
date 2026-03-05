@@ -2,15 +2,26 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import RechnerFreigebenButton from "./components/RechnerFreigebenButton";
 
 type Gate = "loading" | "ok" | "no-session" | "forbidden";
 type UserRow = { id: number; name: string; email?: string | null; istadmin?: any };
 
 function asAdmin(value: any): boolean {
-  return value === true || value === 1 || value === "1" || value === "true" || value === "TRUE" || value === "t" || value === "T";
+  return (
+    value === true ||
+    value === 1 ||
+    value === "1" ||
+    value === "true" ||
+    value === "TRUE" ||
+    value === "t" ||
+    value === "T"
+  );
 }
 
 export default function BenutzerPage() {
+  const router = useRouter();
   const [gate, setGate] = useState<Gate>("loading");
   const [rows, setRows] = useState<UserRow[]>([]);
   const [q, setQ] = useState("");
@@ -30,7 +41,9 @@ export default function BenutzerPage() {
     setGate("ok");
   }
 
-  useEffect(() => { load().catch(() => setGate("no-session")); }, []);
+  useEffect(() => {
+    load().catch(() => setGate("no-session"));
+  }, []);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -52,12 +65,13 @@ export default function BenutzerPage() {
 
   if (gate !== "ok") {
     const title =
-      gate === "loading" ? "Lade …" :
-      gate === "no-session" ? "Nicht angemeldet" : "Kein Zugriff";
+      gate === "loading" ? "Lade …" : gate === "no-session" ? "Nicht angemeldet" : "Kein Zugriff";
     const msg =
-      gate === "loading" ? "" :
-      gate === "no-session" ? "Bitte zuerst einloggen, um die Benutzerverwaltung zu öffnen." :
-      "Für die Benutzerverwaltung ist Admin-Recht erforderlich.";
+      gate === "loading"
+        ? ""
+        : gate === "no-session"
+          ? "Bitte zuerst einloggen, um die Benutzerverwaltung zu öffnen."
+          : "Für die Benutzerverwaltung ist Admin-Recht erforderlich.";
     const btnHref = gate === "no-session" ? "/" : "/dashboard";
     const btnText = gate === "no-session" ? "Zur Anmeldung" : "Zum Dashboard";
     return (
@@ -112,24 +126,29 @@ export default function BenutzerPage() {
           </thead>
           <tbody>
             {filtered.map((u) => {
-              const isAdmin = u.istadmin === true || u.istadmin === 1 || u.istadmin === "1" || String(u.istadmin).toLowerCase() === "true" || String(u.istadmin).toLowerCase() === "t";
+              const isAdmin = asAdmin(u.istadmin);
               return (
                 <tr key={u.id} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={{ padding: 12 }}>{u.name}</td>
                   <td style={{ padding: 12 }}>{u.email ?? "—"}</td>
                   <td style={{ padding: 12 }}>{isAdmin ? "Ja" : "Nein"}</td>
                   <td style={{ padding: 12 }}>
-                    <Link
-                      href={`/benutzer/${u.id}`}
-                      title="Bearbeiten"
-                      style={{ marginRight: 12, textDecoration: "none" }}
-                    >✏️</Link>
-                    <button
-                      title="Löschen"
-                      style={{ background: "transparent", border: "none", cursor: "pointer" }}
-                      onClick={() => delUser(u.id)}
-                    >🗑️</button>
-                  </td>
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, width: "100%" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <Link href={`/benutzer/${u.id}`} title="Bearbeiten" style={{ textDecoration: "none" }}>
+        ✏️
+      </Link>
+      <button
+        title="Löschen"
+        style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+        onClick={() => delUser(u.id)}
+      >
+        🗑️
+      </button>
+    </div>
+    {!isAdmin && <RechnerFreigebenButton benutzerId={u.id} />}
+  </div>
+</td>
                 </tr>
               );
             })}

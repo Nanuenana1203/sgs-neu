@@ -1,0 +1,45 @@
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { getIronSession } from "iron-session";
+import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const hashDevice = (token: string) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
+export async function POST(req: Request) {
+  const session = await getIronSession(await cookies(), {
+    cookieName: "sgs_session",
+    password: process.env.IRON_SESSION_PASSWORD!,
+  });
+
+  if (!session.user || !(String(session.user.istadmin).toLowerCase() === "true" || String(session.user.istadmin) === "1")) {
+    return NextResponse.json({ ok: false, error: "NOT_ADMIN" }, { status: 403 });
+  }
+
+  const body = await req.json();
+  const benutzerId = Number(body.benutzerId);
+  const deviceToken = String(body.deviceToken || "");
+
+  if (!Number.isFinite(benutzerId) || !deviceToken) {
+    return NextResponse.json({ ok: false, error: "INVALID_INPUT" }, { status: 400 });
+  }
+
+  const deviceHash = hashDevice(deviceToken);
+
+  const { error } = await supabase
+    .from("benutzer")
+    .update({ device_hash: deviceHash })
+    .eq("id", benutzerId);
+
+  if (error) {
+    return NextResponse.json({ ok: false, error: "DB_ERROR" }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

@@ -1,22 +1,31 @@
 "use client";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 export default function BackLink({
   className = "",
   children,
-}: { className?: string; children?: ReactNode }) {
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
   const sp = useSearchParams();
   const fromAuth = sp.get("from") === "auth";
 
-  // Session-Keks vorhanden?
-  const hasSession =
-    typeof document !== "undefined" &&
-    document.cookie.split("; ").some(c => c.startsWith("sgs_session="));
+  const [href, setHref] = useState<string | null>(null);
 
-  // Failsafe: ohne Session ODER mit from=auth => immer zur Anmeldemaske
-  const href = (!hasSession || fromAuth) ? "/" : "/dashboard";
+  useEffect(() => {
+    const hasSession =
+      document.cookie
+        .split(";")
+        .some(c => c.trim().startsWith("sgs_session="));
+
+    setHref(!hasSession || fromAuth ? "/" : "/dashboard");
+  }, [fromAuth]);
+
+  if (!href) return null; // verhindert SSR/Client-Mismatch
 
   return (
     <Link href={href} className={className}>
