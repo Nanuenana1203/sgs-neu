@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import LogoutButton from "./LogoutButton";
 
 export const metadata = { title: "SGS" };
 
@@ -47,12 +48,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <Link className={navItem} href="/passwort">Kennwort ändern</Link>
 
             <div className="my-2 h-px bg-slate-200" />
-            <Link
-              href="/auth"
-              className="block px-3 py-1.5 rounded-md text-sm text-red-600 hover:bg-red-50 hover:text-red-700 font-medium transition-colors"
-            >
-              Abmelden
-            </Link>
+            <LogoutButton />
           </nav>
         </aside>
 
