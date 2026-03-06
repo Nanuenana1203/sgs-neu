@@ -1,9 +1,0 @@
-import "../globals.css";
-import CopyrightBadge from "../components/CopyrightBadge";
-import type { ReactNode } from "react";
-export default function StandaloneLayout({ children }: { children: ReactNode }) {
-  return (
-    <div className="min-h-screen relative">
-      {children}    </div>
-  );
-}

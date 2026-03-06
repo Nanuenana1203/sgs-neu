@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth:*)",
+      "Bash(supabase:*)",
+      "Bash(npm install:*)",
+      "Bash(winget install:*)",
+      "Bash(curl:*)",
+      "Read(//c/Users/mario/Desktop/claude-code/**)",
+      "Bash(tar -xzf supabase.tar.gz)",
+      "Bash(ls supabase*)",
+      "Bash(ls *.exe)",
+      "Bash(/c/Users/mario/Desktop/claude-code/supabase.exe:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_618b8bdd04917664f891ad9b027e38fe97066b4c /c/Users/mario/Desktop/claude-code/supabase.exe projects:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_618b8bdd04917664f891ad9b027e38fe97066b4c /c/Users/mario/Desktop/claude-code/supabase.exe db:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_618b8bdd04917664f891ad9b027e38fe97066b4c /c/Users/mario/Desktop/claude-code/supabase.exe link:*)",
+      "Bash(docker:*)",
+      "Bash(git clone:*)"
+    ]
+  }
+}

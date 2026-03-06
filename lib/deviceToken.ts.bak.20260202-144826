@@ -1,9 +1,0 @@
-export function getDeviceToken(): string {
-  if (typeof window === "undefined") return "";
-  let token = localStorage.getItem("sgs_device_token");
-  if (!token) {
-    token = crypto.randomUUID();
-    localStorage.setItem("sgs_device_token", token);
-  }
-  return token;
-}
