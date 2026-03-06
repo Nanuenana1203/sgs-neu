@@ -1,31 +1,40 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PATHS = [
-  "/dashboard",
-  "/kasse",
-  "/mitglieder",
-  "/artikel",
-  "/bahnen",
-  "/benutzer",
-  "/kassenbuch",
-  "/kassenbestand",
-  "/zeitregeln",
-  "/admin",
-  "/bahnbuchung",
-  "/dienste",
-  "/dienstbuchung",
-  "/dienstbuchung-storno",
-  "/mitgliederverwaltung",
-  "/passwort",
+// Öffentlich zugängliche Pfade (kein Login nötig)
+const PUBLIC_PATHS = [
+  "/",
+  "/auth",
+  "/bahnbuchung-public",
+  "/dienstbuchung-public",
+  "/api/login",
+  "/api/logout",
+  "/api/session",
+  "/api/available-days",
+  "/api/slots",
+  "/api/buchungen",
+  "/api/dienste-public",
+  "/api/dienst-buchen-public",
+  "/api/dienst-storno-public",
 ];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  const isProtected = PROTECTED_PATHS.some(p => pathname.startsWith(p));
-  if (!isProtected) return NextResponse.next();
+  // Statische Dateien und Next.js-interne Pfade immer durchlassen
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
+  }
 
+  // Öffentliche Pfade durchlassen
+  const isPublic = PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"));
+  if (isPublic) return NextResponse.next();
+
+  // Alle anderen Pfade: Session prüfen
   const hasSession = req.cookies.has("sgs_user");
   if (!hasSession) {
     const url = req.nextUrl.clone();
@@ -37,22 +46,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/kasse/:path*",
-    "/mitglieder/:path*",
-    "/artikel/:path*",
-    "/bahnen/:path*",
-    "/benutzer/:path*",
-    "/kassenbuch/:path*",
-    "/kassenbestand/:path*",
-    "/zeitregeln/:path*",
-    "/admin/:path*",
-    "/bahnbuchung/:path*",
-    "/dienste/:path*",
-    "/dienstbuchung/:path*",
-    "/dienstbuchung-storno/:path*",
-    "/mitgliederverwaltung/:path*",
-    "/passwort/:path*",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
