@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       sameSite: "lax",
       secure: true,
       path: "/",
-      maxAge: 60 * 60 * 8,
+      // Kein maxAge = Session-Cookie: wird beim Schließen des Browsers automatisch gelöscht
     });
     res.cookies.set("sgs_session", "", { path: "/", maxAge: 0 });
 
