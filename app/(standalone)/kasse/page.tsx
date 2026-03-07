@@ -257,10 +257,10 @@ export default function KassePage() {
       {/* Mitglied wählen */}
       {!auswahl ? (
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
-          <p className="text-sm font-medium text-slate-700 mb-2">Kunde auswahlen</p>
+          <p className="text-sm font-medium text-slate-700 mb-2">Kunde auswählen</p>
           <input
             className="w-full max-w-sm px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Mitglied suchen (mind. 3 Zeichen)…"
+            placeholder="Kunde suchen (mind. 3 Zeichen)…"
             value={queryMitglied}
             onChange={(e) => setQueryMitglied(e.target.value)}
           />
@@ -339,7 +339,7 @@ export default function KassePage() {
           </div>
 
           <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm p-4 ${!auswahl ? 'opacity-50 pointer-events-none select-none' : ''}`}>
-            <p className="text-sm font-medium text-slate-700 mb-2">Artikel wahlen</p>
+            <p className="text-sm font-medium text-slate-700 mb-2">Artikel wählen</p>
             <input
               className="w-full max-w-sm px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Artikel suchen (mind. 3 Zeichen)…"
@@ -382,7 +382,7 @@ export default function KassePage() {
         <div className="md:col-span-1 rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
           <h2 className="text-sm font-semibold text-slate-900 mb-3">Warenkorb</h2>
           {!auswahl ? (
-            <p className="text-sm text-slate-400">Noch kein Mitglied gewahlt.</p>
+            <p className="text-sm text-slate-400">Noch kein Mitglied gewählt.</p>
           ) : korb.length === 0 ? (
             <p className="text-sm text-slate-400">Noch keine Positionen.</p>
           ) : (

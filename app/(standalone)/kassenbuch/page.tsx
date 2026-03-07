@@ -1,11 +1,86 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 type Mitglied = {
   id: number; mitgliedsnr: string | null; name: string | null;
   ort: string | null; ausweisnr: string | null; preisgruppe: number | null;
 };
+
+type ArtikelOption = { id: number; artnr: string | null; bezeichnung: string };
+
+function ArtikelSearch({
+  label, value, onChange, artikel,
+}: {
+  label: string;
+  value: string;
+  onChange: (artnr: string) => void;
+  artikel: ArtikelOption[];
+}) {
+  const [query, setQuery] = useState(value);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setQuery(value); }, [value]);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const matches = useMemo(() => {
+    const s = query.trim().toLowerCase();
+    if (!s) return [];
+    return artikel
+      .filter(a => (a.artnr ?? "").toLowerCase().includes(s) || a.bezeichnung.toLowerCase().includes(s))
+      .slice(0, 10);
+  }, [artikel, query]);
+
+  function select(a: ArtikelOption) {
+    const v = a.artnr ?? "";
+    setQuery(v);
+    onChange(v);
+    setOpen(false);
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setQuery(e.target.value);
+    onChange(e.target.value);
+    setOpen(true);
+  }
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
+      <input
+        type="text"
+        value={query}
+        onChange={handleChange}
+        onFocus={() => setOpen(true)}
+        placeholder="Nr. oder Bezeichnung…"
+        className="w-40 px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {open && matches.length > 0 && (
+        <div className="absolute z-50 top-full mt-1 left-0 w-72 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+          {matches.map(a => (
+            <button
+              key={a.id}
+              type="button"
+              onMouseDown={() => select(a)}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex gap-2 items-baseline border-b border-slate-100 last:border-0"
+            >
+              <span className="font-medium text-slate-800 shrink-0">{a.artnr ?? "–"}</span>
+              <span className="text-slate-500 truncate">{a.bezeichnung}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 type Buchung = {
   datum: string;
@@ -28,19 +103,29 @@ const inp = "w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:o
 
 export default function KassenbuchPage() {
   const [mitglieder, setMitglieder] = useState<Mitglied[]>([]);
+  const [artikel, setArtikel] = useState<ArtikelOption[]>([]);
   const [queryMitglied, setQueryMitglied] = useState("");
   const [auswahl, setAuswahl] = useState<Mitglied | null>(null);
   const [from, setFrom] = useState(janFirstISO());
   const [to, setTo] = useState(todayISO());
+  const [artikelgruppe, setArtikelgruppe] = useState("");
+  const [artnrVon, setArtnrVon] = useState("");
+  const [artnrBis, setArtnrBis] = useState("");
   const [rows, setRows] = useState<Buchung[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch("/api/mitglieder", { cache: "no-store" });
-        const j = r.ok ? await r.json() : [];
-        setMitglieder(Array.isArray(j) ? j : []);
+        const [mr, ar] = await Promise.all([
+          fetch("/api/mitglieder", { cache: "no-store" }),
+          fetch("/api/artikel", { cache: "no-store" }),
+        ]);
+        const mj = mr.ok ? await mr.json() : [];
+        setMitglieder(Array.isArray(mj) ? mj : []);
+        const aj = ar.ok ? await ar.json() : [];
+        const list: ArtikelOption[] = Array.isArray(aj) ? aj : [];
+        setArtikel(list.sort((a, b) => (a.artnr ?? "").localeCompare(b.artnr ?? "")));
       } catch {}
     })();
   }, []);
@@ -60,6 +145,9 @@ export default function KassenbuchPage() {
       if (from) q.set("from", from);
       if (to) q.set("to", to);
       if (auswahl?.id) q.set("mitglied_id", String(auswahl.id));
+      if (artikelgruppe) q.set("artikelgruppe", artikelgruppe);
+      if (artnrVon) q.set("artnr_von", artnrVon);
+      if (artnrBis) q.set("artnr_bis", artnrBis);
       const r = await fetch(`/api/kassenbuch?${q.toString()}`, { cache: "no-store" });
       const j = await r.json().catch(() => ({}));
       const list: Buchung[] = Array.isArray(j) ? j : Array.isArray(j?.rows) ? j.rows : [];
@@ -103,7 +191,7 @@ export default function KassenbuchPage() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-5">
           {!auswahl ? (
             <>
-              <p className="text-sm font-medium text-slate-700 mb-2">Mitglied auswahlen (optional)</p>
+              <p className="text-sm font-medium text-slate-700 mb-2">Mitglied auswählen (optional)</p>
               <input
                 className={inp}
                 placeholder="Mitglied suchen (mind. 3 Zeichen)…"
@@ -167,13 +255,25 @@ export default function KassenbuchPage() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-5">
           <div className="flex flex-wrap items-end gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Von</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Datum von</label>
               <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Bis</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Datum bis</label>
               <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Artikelgruppe</label>
+              <select value={artikelgruppe} onChange={(e) => setArtikelgruppe(e.target.value)} className="px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Alle</option>
+                <option value="Sport">Sport</option>
+                <option value="Munition">Munition</option>
+                <option value="Scheiben">Scheiben</option>
+                <option value="Sonstiges">Sonstiges</option>
+              </select>
+            </div>
+            <ArtikelSearch label="Art.-Nr. von" value={artnrVon} onChange={setArtnrVon} artikel={artikel} />
+            <ArtikelSearch label="Art.-Nr. bis" value={artnrBis} onChange={setArtnrBis} artikel={artikel} />
             <div className="flex gap-3 ml-auto">
               <button onClick={loadData} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">
                 Anzeigen

@@ -55,6 +55,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
   if (body.artnr !== undefined) patch.artnr = body.artnr == null || body.artnr === "" ? null : String(body.artnr);
   if (body.kachel !== undefined) patch.kachel = toBool(body.kachel);
   if (body.aktiv  !== undefined) patch.aktiv  = toBool(body.aktiv);
+  if (body.artikelgruppe !== undefined) patch.artikelgruppe = body.artikelgruppe ? String(body.artikelgruppe) : null;
   for (let i = 1; i <= 9; i++) {
     const key = `preis${i}` as keyof typeof body;
     if (body[key] !== undefined) patch[key] = numOrNull(body[key]);

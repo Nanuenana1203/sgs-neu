@@ -25,6 +25,7 @@ export default function EditArtikelPage() {
   const [bezeichnung, setBezeichnung] = useState("");
   const [preis, setPreis] = useState({ p1: "", p2: "", p3: "", p4: "", p5: "", p6: "", p7: "", p8: "", p9: "" });
   const [kachel, setKachel] = useState(false);
+  const [artikelgruppe, setArtikelgruppe] = useState("");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
@@ -46,6 +47,7 @@ export default function EditArtikelPage() {
           p7: fmt2(a.preis7), p8: fmt2(a.preis8), p9: fmt2(a.preis9),
         });
         setKachel(!!a.kachel);
+        setArtikelgruppe(a.artikelgruppe ?? "");
       } catch (e: any) {
         setErr(String(e?.message ?? e));
       } finally {
@@ -73,6 +75,7 @@ export default function EditArtikelPage() {
         preis4: toNumOrNull(preis.p4), preis5: toNumOrNull(preis.p5), preis6: toNumOrNull(preis.p6),
         preis7: toNumOrNull(preis.p7), preis8: toNumOrNull(preis.p8), preis9: toNumOrNull(preis.p9),
         kachel,
+        artikelgruppe: artikelgruppe || null,
       };
       const r = await fetch(`/api/artikel/${id}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => null);
@@ -96,7 +99,7 @@ export default function EditArtikelPage() {
 
         <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className={lbl}>Art.-Nr.</label>
                 <input className={inp} value={artnr} onChange={e => setArtnr(e.target.value)} placeholder="Artikelnummer" />
@@ -104,6 +107,16 @@ export default function EditArtikelPage() {
               <div>
                 <label className={lbl}>Bezeichnung*</label>
                 <input className={inp} value={bezeichnung} onChange={e => setBezeichnung(e.target.value)} placeholder="Bezeichnung" required />
+              </div>
+              <div>
+                <label className={lbl}>Artikelgruppe</label>
+                <select className={inp} value={artikelgruppe} onChange={e => setArtikelgruppe(e.target.value)}>
+                  <option value="">– keine –</option>
+                  <option value="Sport">Sport</option>
+                  <option value="Munition">Munition</option>
+                  <option value="Scheiben">Scheiben</option>
+                  <option value="Sonstiges">Sonstiges</option>
+                </select>
               </div>
             </div>
 

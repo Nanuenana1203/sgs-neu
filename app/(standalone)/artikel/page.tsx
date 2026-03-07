@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-type Row = { id: number; artnr: number | null; bezeichnung: string; preis1: number | null };
+type Row = { id: number; artnr: number | null; bezeichnung: string; preis1: number | null; artikelgruppe: string | null };
 
 export default function ArtikelPage() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -78,6 +78,7 @@ export default function ArtikelPage() {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Artikelnummer</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Bezeichnung</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Gruppe</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Preis 1</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Aktionen</th>
               </tr>
@@ -87,6 +88,7 @@ export default function ArtikelPage() {
                 <tr key={a.id} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-4 py-3 text-slate-700">{a.artnr ?? "–"}</td>
                   <td className="px-4 py-3 text-slate-700">{a.bezeichnung}</td>
+                  <td className="px-4 py-3 text-slate-700">{a.artikelgruppe ?? "–"}</td>
                   <td className="px-4 py-3 text-slate-700">
                     {a.preis1 != null ? new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(Number(a.preis1)) : "–"}
                   </td>
@@ -100,7 +102,7 @@ export default function ArtikelPage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-slate-400 text-sm">
+                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400 text-sm">
                     Keine Artikel gefunden.
                   </td>
                 </tr>

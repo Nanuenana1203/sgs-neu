@@ -18,7 +18,7 @@ export async function GET() {
   if (!BASE || !KEY) return NextResponse.json({ ok: false, where: "env" }, { status: 500 });
   const url =
     `${BASE}/rest/v1/artikel` +
-    `?select=id,artnr,bezeichnung,kachel,preis1,preis2,preis3,preis4,preis5,preis6,preis7,preis8,preis9` +
+    `?select=id,artnr,bezeichnung,kachel,artikelgruppe,preis1,preis2,preis3,preis4,preis5,preis6,preis7,preis8,preis9` +
     `&order=artnr.asc.nullsfirst`;
   const r = await fetch(url, { headers, cache: "no-store" });
   const text = await r.text();
@@ -56,6 +56,7 @@ export async function POST(req: Request) {
     preis8: numOrNull(body?.preis8),
     preis9: numOrNull(body?.preis9),
     kachel: toBool(body?.kachel),
+    artikelgruppe: body?.artikelgruppe ? String(body.artikelgruppe) : null,
   };
   if (artnr !== null) payload.artnr = artnr;
 

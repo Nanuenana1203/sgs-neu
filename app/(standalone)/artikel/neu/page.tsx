@@ -21,6 +21,7 @@ export default function NeuerArtikel() {
   const router = useRouter();
   const [artnr, setArtnr] = useState("");
   const [bezeichnung, setBezeichnung] = useState("");
+  const [artikelgruppe, setArtikelgruppe] = useState("");
   const [kachel, setKachel] = useState(false);
   const [p, setP] = useState({ p1: "", p2: "", p3: "", p4: "", p5: "", p6: "", p7: "", p8: "", p9: "" });
   const [err, setErr] = useState("");
@@ -34,6 +35,7 @@ export default function NeuerArtikel() {
       const body: any = {
         artnr: artnr.trim() === "" ? null : artnr.trim(),
         bezeichnung: bezeichnung.trim(),
+        artikelgruppe: artikelgruppe || null,
         preis1: toNumOrNull(p.p1), preis2: toNumOrNull(p.p2), preis3: toNumOrNull(p.p3),
         preis4: toNumOrNull(p.p4), preis5: toNumOrNull(p.p5), preis6: toNumOrNull(p.p6),
         preis7: toNumOrNull(p.p7), preis8: toNumOrNull(p.p8), preis9: toNumOrNull(p.p9),
@@ -55,7 +57,7 @@ export default function NeuerArtikel() {
 
         <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className={lbl}>Art.-Nr.</label>
                 <input className={inp} value={artnr} onChange={e => setArtnr(e.target.value)} placeholder="Artikelnummer" />
@@ -63,6 +65,16 @@ export default function NeuerArtikel() {
               <div>
                 <label className={lbl}>Bezeichnung*</label>
                 <input className={inp} value={bezeichnung} onChange={e => setBezeichnung(e.target.value)} placeholder="Bezeichnung" required />
+              </div>
+              <div>
+                <label className={lbl}>Artikelgruppe</label>
+                <select className={inp} value={artikelgruppe} onChange={e => setArtikelgruppe(e.target.value)}>
+                  <option value="">– keine –</option>
+                  <option value="Sport">Sport</option>
+                  <option value="Munition">Munition</option>
+                  <option value="Scheiben">Scheiben</option>
+                  <option value="Sonstiges">Sonstiges</option>
+                </select>
               </div>
             </div>
 

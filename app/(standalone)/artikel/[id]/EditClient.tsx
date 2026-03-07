@@ -7,7 +7,7 @@ type Art = {
   id:number; artnr:string; bezeichnung:string;
   preis1?:number; preis2?:number; preis3?:number; preis4?:number; preis5?:number;
   preis6?:number; preis7?:number; preis8?:number; preis9?:number;
-  kachel?:boolean;
+  kachel?:boolean; artikelgruppe?:string | null;
 };
 
 export default function EditClient({ id }: { id: string }) {
@@ -22,18 +22,21 @@ export default function EditClient({ id }: { id: string }) {
   const [preis7, setPreis7] = useState(""); const [preis8, setPreis8] = useState("");
   const [preis9, setPreis9] = useState("");
   const [kachel, setKachel] = useState(false);
+  const [artikelgruppe, setArtikelgruppe] = useState("");
 
   useEffect(() => {
     (async () => {
       const res = await fetch(`/api/artikel/${id}`, { cache:"no-store" });
       if (!res.ok) { router.push("/artikel"); return; }
-      const a:Art = await res.json();
+      const json = await res.json();
+      const a:Art = json.artikel ?? json;
       setArtnr(a.artnr || ""); setBezeichnung(a.bezeichnung || "");
       setPreis1(a.preis1!=null?String(a.preis1):""); setPreis2(a.preis2!=null?String(a.preis2):"");
       setPreis3(a.preis3!=null?String(a.preis3):""); setPreis4(a.preis4!=null?String(a.preis4):"");
       setPreis5(a.preis5!=null?String(a.preis5):""); setPreis6(a.preis6!=null?String(a.preis6):"");
       setPreis7(a.preis7!=null?String(a.preis7):""); setPreis8(a.preis8!=null?String(a.preis8):"");
       setPreis9(a.preis9!=null?String(a.preis9):""); setKachel(!!a.kachel);
+      setArtikelgruppe(a.artikelgruppe ?? "");
       setLoading(false);
     })();
   }, [id, router]);
@@ -47,7 +50,7 @@ export default function EditClient({ id }: { id: string }) {
       preis1: toNum(preis1), preis2: toNum(preis2), preis3: toNum(preis3),
       preis4: toNum(preis4), preis5: toNum(preis5), preis6: toNum(preis6),
       preis7: toNum(preis7), preis8: toNum(preis8), preis9: toNum(preis9),
-      kachel
+      kachel, artikelgruppe: artikelgruppe || null,
     };
     const res = await fetch(`/api/artikel/${id}`, {
       method: "PUT",
@@ -65,7 +68,7 @@ export default function EditClient({ id }: { id: string }) {
       <div style={{ maxWidth:900, margin:"0 auto" }}>
         <h1 style={{ textAlign:"center", fontSize:28, fontWeight:800, marginBottom:16 }}>Artikel bearbeiten</h1>
         <form onSubmit={save} style={{ background:"#fff", border:"1px solid #e5e7eb", borderRadius:10, padding:20, display:"grid", gap:16 }}>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr", gap:16 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 2fr 1fr", gap:16 }}>
             <label style={{ display:"grid", gap:6 }}>
               <span style={{ fontWeight:600 }}>Art.-Nr.*</span>
               <Input value={artnr} onChange={(e:any)=>setArtnr(e.target.value)} required />
@@ -73,6 +76,17 @@ export default function EditClient({ id }: { id: string }) {
             <label style={{ display:"grid", gap:6 }}>
               <span style={{ fontWeight:600 }}>Bezeichnung*</span>
               <Input value={bezeichnung} onChange={(e:any)=>setBezeichnung(e.target.value)} required />
+            </label>
+            <label style={{ display:"grid", gap:6 }}>
+              <span style={{ fontWeight:600 }}>Artikelgruppe</span>
+              <select value={artikelgruppe} onChange={(e:any)=>setArtikelgruppe(e.target.value)}
+                style={{ padding:"10px 12px", border:"1px solid #e5e7eb", borderRadius:8 }}>
+                <option value="">– keine –</option>
+                <option value="Sport">Sport</option>
+                <option value="Munition">Munition</option>
+                <option value="Scheiben">Scheiben</option>
+                <option value="Sonstiges">Sonstiges</option>
+              </select>
             </label>
           </div>
 
