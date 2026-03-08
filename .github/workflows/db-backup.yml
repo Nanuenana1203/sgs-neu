@@ -20,7 +20,14 @@ jobs:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           STAMP=$(date +%Y%m%d-%H%M%S)
-          pg_dump "postgresql://postgres.rxprumwtuijmpohuunun@aws-0-eu-west-1.pooler.supabase.com:5432/postgres" \
+          # IPv4-Adresse auflösen (GitHub Actions hat IPv6-Probleme mit Supabase)
+          DB_IP=$(dig +short A db.rxprumwtuijmpohuunun.supabase.co | head -1)
+          echo "Verbinde mit $DB_IP"
+          pg_dump \
+            -h "$DB_IP" \
+            -p 5432 \
+            -U postgres \
+            -d postgres \
             --no-owner --no-acl \
             -f "sgs-db-$STAMP.sql"
           gzip "sgs-db-$STAMP.sql"
