@@ -12,23 +12,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Supabase CLI installieren
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      - name: PostgreSQL Client installieren
+        run: sudo apt-get install -y postgresql-client
 
       - name: Datenbank dumpen
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           STAMP=$(date +%Y%m%d-%H%M%S)
-          DB_URL="postgresql://postgres:${DB_PASSWORD}@db.rxprumwtuijmpohuunun.supabase.co:5432/postgres"
-          supabase db dump \
-            --db-url "$DB_URL" \
+          pg_dump "postgresql://postgres.rxprumwtuijmpohuunun@aws-0-eu-west-1.pooler.supabase.com:5432/postgres" \
+            --no-owner --no-acl \
             -f "sgs-db-$STAMP.sql"
           gzip "sgs-db-$STAMP.sql"
-          echo "BACKUP_FILE=sgs-db-$STAMP.sql.gz" >> $GITHUB_ENV
 
       - name: Backup als Artefakt speichern
         uses: actions/upload-artifact@v4
