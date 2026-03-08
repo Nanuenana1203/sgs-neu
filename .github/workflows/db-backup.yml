@@ -12,29 +12,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: PostgreSQL Client installieren
-        run: sudo apt-get install -y postgresql-client
+      - name: Repository auschecken
+        uses: actions/checkout@v4
 
-      - name: Datenbank dumpen
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Datenbank exportieren
         env:
-          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          STAMP=$(date +%Y%m%d-%H%M%S)
-          # IPv4-Adresse auflösen (GitHub Actions hat IPv6-Probleme mit Supabase)
-          DB_IP=$(python3 -c "import socket; print(socket.getaddrinfo('db.rxprumwtuijmpohuunun.supabase.co', 5432, socket.AF_INET)[0][4][0])")
-          echo "Verbinde mit $DB_IP"
-          pg_dump \
-            -h "$DB_IP" \
-            -p 5432 \
-            -U postgres \
-            -d postgres \
-            --no-owner --no-acl \
-            -f "sgs-db-$STAMP.sql"
-          gzip "sgs-db-$STAMP.sql"
+          node scripts/db-backup-api.mjs
+          ls -lh db-backups/
 
       - name: Backup als Artefakt speichern
         uses: actions/upload-artifact@v4
         with:
           name: sgs-db-backup-${{ github.run_number }}
-          path: "*.sql.gz"
+          path: db-backups/*.json
           retention-days: 90
